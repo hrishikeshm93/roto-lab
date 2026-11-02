@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RotoLab 3D – Rotational Motion</title>
+<style>
+:root{--bg:#e9eef6;--pn:#fff;--tx:#12203c;--mu:#56627a;--bd:#d3dae7;--ac:#1d5fd8;--ac2:#d97706;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070c1a;--pn:#0f1730;--tx:#e6ebf7;--mu:#93a0bf;--bd:#222d4d;--ac:#5b9dff;--ac2:#fbbf24;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#070c1a;--pn:#0f1730;--tx:#e6ebf7;--mu:#93a0bf;--bd:#222d4d;--ac:#5b9dff;--ac2:#fbbf24;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,select,input{font:inherit;color:inherit}
+button{border:1px solid var(--bd);background:var(--pn);border-radius:8px;padding:6px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+button:hover{border-color:var(--ac)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--pn);border-bottom:1px solid var(--bd)}
+h1{margin:0;font-size:19px}header small{color:var(--mu)}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button.on,.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:12px;padding:12px;align-items:start}
+#stage{position:relative;height:clamp(420px,76vh,780px);border-radius:14px;overflow:hidden;background:radial-gradient(circle at 50% 30%,#15254d,#070c1c);border:1px solid var(--bd)}
+#c{width:100%;height:100%;display:block;touch-action:none}
+.hud{position:absolute;left:12px;top:10px;max-width:55%;color:#e6ebf7;font-size:12px;pointer-events:none}.hud b{display:block;font-size:14px}.hud span{opacity:.7}
+.views{position:absolute;right:10px;top:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:45%}
+.views button,.bar button,.bar select{background:rgba(9,16,38,.78);color:#e6ebf7;border-color:#2c3a66;padding:4px 10px;font-size:12px}
+.bar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 20px)}
+.credit{position:absolute;left:12px;bottom:12px;font-size:10px;color:#cbd5f5;opacity:.5;pointer-events:none}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.card h2{margin:0 0 8px;font-size:13px;color:var(--mu);font-weight:600}
+.row{margin-bottom:9px}.row label{display:block;font-size:12px;margin-bottom:2px}.row label small{color:var(--mu)}
+.row div{display:flex;gap:8px;align-items:center}.row input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}
+.row input[type=number]{width:70px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:3px 5px}
+.tg{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.chip{font-size:12px;padding:3px 10px;border-radius:99px}
+.ro>div{display:grid;grid-template-columns:1fr auto 48px;gap:6px;padding:3px 0;border-bottom:1px dashed var(--bd);font-size:12.5px}
+.ro span{color:var(--mu)}.ro b{font-variant-numeric:tabular-nums}.ro i{color:var(--mu);font-style:normal;font-size:11px}
+#obs{margin-top:8px;font-size:12.5px;padding:8px 10px;border-left:3px solid var(--ac2);background:var(--bg);border-radius:0 8px 8px 0}
+.gh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.gh h2{margin:0}.gh select{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:2px 6px}
+#g{width:100%;height:190px;display:block}
+#info{margin:0 12px 12px}#info summary{cursor:pointer;font-weight:600}
+.gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:10px}.gr h3{margin:0 0 3px;font-size:13px;color:var(--ac)}.gr p{margin:0;font-size:13px}
+footer{text-align:center;color:var(--mu);font-size:12px;padding:4px 12px 18px}
+.err{position:absolute;inset:0;display:grid;place-items:center;color:#fecaca;padding:24px;text-align:center}
+@media(max-width:900px){main{grid-template-columns:1fr}.credit{display:none}.hud{max-width:100%;top:44px}.views{max-width:100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<header><div><h1>RotoLab 3D</h1><small>NCERT Class 11 Physics · Chapter 6 · Systems of Particles and Rotational Motion</small></div>
+<nav id="tabs"><button class="on" data-i="0">6.6 Angular and linear velocity</button><button data-i="1">6.7 Moment of force (torque)</button></nav></header>
+<main>
+<section id="stage"><canvas id="c" aria-label="3D simulation viewport"></canvas>
+<div class="hud" id="hud"></div>
+<div class="views" id="views"><button data-v="iso" title="Isometric view">Iso</button><button data-v="top" title="Look down the z-axis">Top</button><button data-v="front" title="Front view">Front</button><button data-v="side" title="Side view">Side</button></div>
+<div class="bar"><button id="pp"></button><button id="st" title="Advance one step">Step</button><button id="rs" title="Restore the original experiment">Reset</button>
+<select id="sp" aria-label="Animation speed"><option value=".25">0.25×</option><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>
+<div class="credit">Designed and Developed by: Hrishikesh M (PGT Physics)</div></section>
+<aside>
+<div class="card"><h2>Experiment controls</h2><div id="ctrls"></div><div class="tg" id="tg"></div></div>
+<div class="card"><h2>Live readings</h2><div class="ro" id="ro"></div><div id="obs"></div></div>
+<div class="card"><div class="gh"><h2 id="gt">Graph</h2><select id="gsel" aria-label="Choose graph"><option value="0">ω – t</option><option value="1">θ – t</option><option value="2">v – t (P)</option><option value="3">v – r</option></select></div><canvas id="g"></canvas></div>
+</aside></main>
+<details class="card" id="info" open><summary>Concept notes from the textbook</summary><div class="gr" id="gr"></div></details>
+<footer>Designed and Developed by: Hrishikesh M (PGT Physics) · Needs an internet connection to load Three.js (r128)</footer>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+function fail(m){$('#stage').insertAdjacentHTML('beforeend','<div class="err">'+m+'</div>')}
+let R;
+if(!window.THREE||!THREE.OrbitControls)fail('Three.js could not be loaded. Check your internet connection and reload the page.');
+else try{R=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true})}catch(e){fail('WebGL is not available in this browser.')}
+if(R)init();
+function init(){
+const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),D=Math.PI/180;
+const f=(x,n=2)=>(+x.toFixed(n)).toFixed(n),cross=(a,b)=>new THREE.Vector3().crossVectors(a,b);
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,1,.1,200);cam.up.set(0,0,1);
+const ctl=new THREE.OrbitControls(cam,$('#c'));ctl.enableDamping=true;ctl.dampingFactor=.08;
+scene.add(new THREE.AmbientLight(0xffffff,.7));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(6,-8,12);scene.add(dl);
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.setClearColor(0x080d1e,0);
+function size(){const s=$('#stage');R.setSize(s.clientWidth,s.clientHeight,false);cam.aspect=s.clientWidth/s.clientHeight;cam.updateProjectionMatrix()}
+new ResizeObserver(size).observe($('#stage'));
+const ON0={vec:1,pos:1,acc:1,arc:1,trail:1,lab:1,axes:1,plane:1,loa:1,rh:1,fF:0,fR:0},on={...ON0};
+const G=[new THREE.Group(),new THREE.Group()];G.forEach(g=>scene.add(g));
+const ax=new THREE.Group();scene.add(ax);const SL=[];
+/* ---- helpers ---- */
+function arrow(c,g){const a=new THREE.ArrowHelper(V(0,0,1),V(),1,c);g.add(a);return a}
+function setA(a,o,v,k,max,flag='vec'){const l=v.length()*k;a.visible=!!on[flag]&&l>.03;if(!a.visible)return;const L=Math.min(l,max);a.position.copy(o);a.setDirection(v.clone().normalize());a.setLength(L,Math.min(.35,L*.45),Math.min(.18,L*.25))}
+function line(n,c,g,dash){const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));const l=new THREE.Line(geo,dash?new THREE.LineDashedMaterial({color:c,dashSize:.25,gapSize:.15}):new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.9}));l.frustumCulled=false;g.add(l);return l}
+function setPts(l,p){const a=l.geometry.attributes.position;p.forEach((q,i)=>a.setXYZ(i,q.x,q.y,q.z));a.needsUpdate=true;if(l.material.isLineDashedMaterial)l.computeLineDistances()}
+function lab(t,c,g,static_){const k=document.createElement('canvas');k.width=128;k.height=64;const x=k.getContext('2d');x.font='bold 42px system-ui';x.fillStyle=c;x.textAlign='center';x.textBaseline='middle';x.fillText(t,64,32);
+const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(k),depthTest:false,transparent:true}));s.scale.set(1.3,.65,1);s.renderOrder=9;g.add(s);if(static_)SL.push(s);return s}
+const putL=(s,p,show=true)=>{s.position.copy(p);s.visible=show&&!!on.lab};
+const sph=(r,c,g)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),new THREE.MeshStandardMaterial({color:c,roughness:.4}));g.add(m);return m};
+/* ---- shared axes + grid ---- */
+const gr=new THREE.GridHelper(12,12,0x2b3d70,0x1a2548);gr.rotation.x=Math.PI/2;ax.add(gr);
+[[6.5,0,0,0xef4444,'x'],[0,6.5,0,0x4ade80,'y'],[0,0,7,0x60a5fa,'z']].forEach(([x,y,z,c,t])=>{const l=line(2,c,ax);setPts(l,[V(),V(x,y,z)]);const s=lab(t,'#'+c.toString(16).padStart(6,'0'),ax,1);s.position.set(x*1.05,y*1.05,z*1.04+.2)});
+const lO=lab('O','#fff',ax,1);lO.position.set(-.45,-.45,.3);
+/* ---- SIM 1: rotation about fixed axis ---- */
+const g0=G[0],pl=new THREE.Group(),rot=new THREE.Group();g0.add(pl);pl.add(rot);
+const dm=new THREE.Mesh(new THREE.CylinderGeometry(4.4,4.4,.1,64),new THREE.MeshStandardMaterial({color:0x4a7bd0,transparent:true,opacity:.5,roughness:.5}));dm.rotation.x=Math.PI/2;rot.add(dm);
+for(let k=0;k<4;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(4.4,.1,.14),new THREE.MeshStandardMaterial({color:k?0xc5d6ff:0xffffff}));b.position.x=2.2;const h=new THREE.Group();h.rotation.z=k*Math.PI/2;h.add(b);rot.add(h)}
+for(let r=1;r<=4;r++){const l=line(65,0x9db8ee,rot);setPts(l,Array.from({length:65},(_,i)=>V(r*Math.cos(i*Math.PI/32),r*Math.sin(i*Math.PI/32),.07)));l.material.opacity=.45}
+const rod=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,7,12),new THREE.MeshStandardMaterial({color:0xe5e7eb}));rod.rotation.x=Math.PI/2;rod.position.z=3;g0.add(rod);
+sph(.12,0xffffff,pl);
+const ref=line(2,0xffffff,pl,true);setPts(ref,[V(),V(4.4,0,0)]);
+const arc=line(65,0xfacc15,pl);
+const p1=sph(.24,0xffa62b,g0),p2=sph(.2,0x34d399,g0);
+const TN=300,tp=new Float32Array(TN*3),tgeo=new THREE.BufferGeometry();tgeo.setAttribute('position',new THREE.BufferAttribute(tp,3));tgeo.setDrawRange(0,0);
+const trail=new THREE.Line(tgeo,new THREE.LineBasicMaterial({color:0xffa62b}));trail.frustumCulled=false;g0.add(trail);let tc=0;
+const addTrail=p=>{tp.copyWithin(0,3);tp.set([p.x,p.y,p.z],(TN-1)*3);tc=Math.min(tc+1,TN);tgeo.setDrawRange(TN-tc,tc);tgeo.attributes.position.needsUpdate=true};
+const wA=arrow(0xc084fc,g0),vA=arrow(0x4ade80,g0),v2A=arrow(0x86efac,g0),opA=arrow(0xfacc15,g0),cpA=arrow(0x38bdf8,g0),atA=arrow(0xfb923c,g0),acA=arrow(0xf472b6,g0);
+const L1={P:lab('P','#ffa62b',g0),P2:lab('P₂','#34d399',g0),C:lab('C','#fff',g0),w:lab('ω','#c084fc',g0),v:lab('v','#4ade80',g0),r:lab('r','#facc15',g0)};
+/* ---- SIM 2: torque ---- */
+const g1=G[1],pS=sph(.22,0xfacc15,g1),rA=arrow(0xfacc15,g1),FA=arrow(0xf87171,g1),tA=arrow(0x4ade80,g1),rhA=arrow(0x86efac,g1);
+const loaL=line(2,0xf87171,g1),perp=line(2,0x38bdf8,g1),rhL=line(40,0x86efac,g1);loaL.material.opacity=.45;
+const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(9),3));pg.setIndex([0,1,2]);
+const pm=new THREE.Mesh(pg,new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));pm.frustumCulled=false;g1.add(pm);
+const L2={r:lab('r','#facc15',g1),F:lab('F','#f87171',g1),t:lab('τ','#4ade80',g1),P:lab('P','#facc15',g1),p:lab('r⊥','#38bdf8',g1)};
+/* ---- state & config ---- */
+const CFG=[[
+{k:'w0',l:'Initial angular velocity ω₀',u:'rad/s',min:-10,max:10,s:.1,v:2,t:'Positive = anticlockwise seen from +z'},
+{k:'al',l:'Angular acceleration α',u:'rad/s²',min:-5,max:5,s:.1,v:0,t:'α = dω/dt'},
+{k:'r',l:'Radius of particle P (r₁)',u:'m',min:.5,max:4,s:.1,v:3},
+{k:'r2',l:'Radius of particle P₂ (r₂)',u:'m',min:0,max:4,s:.1,v:1.5,t:'r₂ = 0 puts the particle on the axis'},
+{k:'z',l:'Height of rotation plane',u:'m',min:0,max:3,s:.1,v:1.5,t:'Slides C along the axis; ω × r does not change'}],[
+{k:'r',l:'Length of position vector |r|',u:'m',min:.5,max:5,s:.1,v:3},
+{k:'az',l:'Azimuth of r',u:'°',min:0,max:360,s:1,v:30},
+{k:'el',l:'Elevation of r',u:'°',min:-80,max:80,s:1,v:0},
+{k:'F',l:'Force magnitude |F|',u:'N',min:0,max:10,s:.1,v:6},
+{k:'th',l:'Angle θ between r and F',u:'°',min:0,max:180,s:1,v:60},
+{k:'ps',l:'Orientation ψ of the r–F plane',u:'°',min:0,max:360,s:1,v:0,t:'Spins F about the direction of r'}]];
+const TGL=[[['vec','Velocity and ω'],['pos','OP and CP'],['acc','Accelerations'],['arc','Δθ arc'],['trail','Trail'],['lab','Labels'],['axes','Axes']],
+[['vec','Vectors'],['plane','r–F plane'],['loa','Line of action, r⊥'],['rh','Right-hand sense'],['lab','Labels'],['axes','Axes'],['fF','Reverse F'],['fR','Reverse r']]];
+const INFO=[[['Learning objective','Every particle of a rigid body turning about a fixed axis has the same ω, but its linear speed v = ωr grows with its perpendicular distance r (Sec. 6.6).'],
+['Key equations','v = ωr (6.19) · v = ω × r (6.20) · α = dω/dt (6.22). Also a<sub>t</sub> = αr and a<sub>c</sub> = ω²r for the circular path.'],
+['Try this','Set r₂ = 0: a particle on the axis has v = 0, so the axis is fixed. Compare |ω × OP| with |ω × CP| (ω × OC = 0). Make α non-zero: only the size of ω changes, not its direction along z.'],
+['Real life and assumptions','Wheels, fan blades, turbines. Model: ideal rigid body, frictionless fixed axis, ω capped at ±20 rad/s, long arrows are length-capped, SI units.']],
+[['Learning objective','See how the moment of force τ = r × F depends on r, F and the angle between them, and how its direction follows the right-handed screw rule (Sec. 6.7.1).'],
+['Key equations','τ = r × F (6.23) · τ = rF sinθ (6.24a) · τ = (r sinθ)F = r⊥F · τ = rF⊥ (6.24b, c). Unit: N m.'],
+['Try this','Set θ = 0° or 180°: τ = 0 because the line of action passes through O. θ = 90° gives the maximum. Reverse F or r and τ flips; reverse both and τ stays the same. Check r·τ = F·τ = 0.'],
+['Real life and assumptions','Opening a door, using a spanner. Single particle, torque taken about the origin O. Torque has the dimensions of work, but it is a vector and work is a scalar.']]];
+const HUD=['<b>Rotation about a fixed axis (z)</b><span>Drag to orbit · scroll or pinch to zoom · right-drag to pan</span>','<b>Moment of force τ = r × F about O</b><span>Drag to orbit · scroll or pinch to zoom · right-drag to pan</span>'];
+const mk=i=>{const o={};CFG[i].forEach(c=>o[c.k]=c.v);if(i)o.sw=Math.acos(1-o.th/90);else{o.th=0;o.w=o.w0;o.t=0}return o};
+let sim=0,S=[mk(0),mk(1)],H=[],PL=[!RM,false],speed=1,tw=null,tt=null;
+const TGT=[V(0,0,1.8),V(0,0,.5)],VW={iso:[9,-11,8],top:[0,-.01,17],front:[0,-17,2.5],side:[17,0,2.5]};
+/* ---- UI builders ---- */
+function clearTrail(){tc=0;tgeo.setDrawRange(0,0)}
+function cb(k){const s=S[sim];if(sim==0&&k=='w0'){s.w=s.w0;s.th=0;s.t=0;H=[];clearTrail()}if(sim==1&&k=='th'){PL[1]=false;s.sw=Math.acos(clamp(1-s.th/90,-1,1));pb()}}
+function buildCtrls(){const c=$('#ctrls');c.innerHTML='';CFG[sim].forEach(o=>{const d=document.createElement('div');d.className='row';d.innerHTML=`<label title="${o.t||o.l}">${o.l} <small>(${o.u})</small></label><div><input type="range" min="${o.min}" max="${o.max}" step="${o.s}"><input type="number" min="${o.min}" max="${o.max}" step="${o.s}" aria-label="${o.l}"></div>`;
+const [rg,nm]=d.querySelectorAll('input');rg.value=nm.value=S[sim][o.k];const set=v=>{if(isNaN(v))return;v=clamp(v,o.min,o.max);S[sim][o.k]=v;rg.value=v;if(document.activeElement!==nm)nm.value=v;cb(o.k)};rg.oninput=()=>set(+rg.value);nm.oninput=()=>set(+nm.value);o.el=[rg,nm];c.append(d)})}
+function buildChips(){const t=$('#tg');t.innerHTML='';TGL[sim].forEach(([k,l])=>{const b=document.createElement('button');b.className='chip'+(on[k]?' on':'');b.textContent=l;b.title=(k[0]=='f'?'Reverse the direction of ':'Show or hide: ')+l;b.setAttribute('aria-pressed',!!on[k]);b.onclick=()=>{on[k]=on[k]?0:1;b.classList.toggle('on',!!on[k]);b.setAttribute('aria-pressed',!!on[k])};t.append(b)})}
+const roEl={};function RO(l){l.forEach(([k,v,u])=>{let e=roEl[k];if(!e){const d=document.createElement('div');d.innerHTML='<span></span><b></b><i></i>';$('#ro').append(d);e=roEl[k]=d.children[1];d.children[0].textContent=k;d.children[2].textContent=u||''}if(e.textContent!==v)e.textContent=v})}
+function pb(){$('#pp').textContent=PL[sim]?'⏸ Pause':(sim?'▶ Sweep θ':'▶ Play')}
+function view(n){const p=VW[n];tt=TGT[sim].clone();tw=tt.clone().add(V(...p));if(RM){cam.position.copy(tw);ctl.target.copy(tt);tw=tt=null}}
+function setSim(i){sim=i;G.forEach((g,j)=>g.visible=j==i);document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',+b.dataset.i==i));
+$('#ro').innerHTML='';for(const k in roEl)delete roEl[k];buildCtrls();buildChips();pb();$('#hud').innerHTML=HUD[i]+(RM&&!i?'<br><span>Reduced motion is on: press Play to animate.</span>':'');
+$('#gr').innerHTML=INFO[i].map(([h,t])=>`<div><h3>${h}</h3><p>${t}</p></div>`).join('');$('#gsel').style.display=i?'none':'';view('iso')}
+function reset(){S[sim]=mk(sim);H=[];clearTrail();Object.assign(on,ON0);PL[sim]=sim==0&&!RM;buildCtrls();buildChips();pb()}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setSim(+b.dataset.i));
+document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>view(b.dataset.v));
+$('#pp').onclick=()=>{PL[sim]=!PL[sim];pb()};$('#rs').onclick=reset;$('#st').onclick=()=>{PL[sim]=false;pb();advance(sim?.25:1/30)};$('#sp').onchange=e=>speed=+e.target.value;
+ctl.addEventListener('start',()=>{tw=tt=null});
+/* ---- physics ---- */
+function advance(dt){const s=S[sim];
+if(!sim){const n=Math.max(1,Math.ceil(dt*120)),h=dt/n;for(let i=0;i<n;i++){s.w=clamp(s.w+s.al*h,-20,20);s.th+=s.w*h}s.t+=dt;H.push([s.t,s.th,s.w,s.w*s.r]);if(H.length>1500)H.shift();addTrail(V(s.r*Math.cos(s.th),s.r*Math.sin(s.th),s.z))}
+else{s.sw+=dt*.8;s.th=90-90*Math.cos(s.sw);const o=CFG[1][4].el;o[0].value=s.th;if(document.activeElement!==o[1])o[1].value=f(s.th,0)}}
+function plot(o){const c=$('#g'),x=c.getContext('2d'),d=devicePixelRatio||1,W=c.clientWidth,Hh=c.clientHeight;if(c.width!==Math.round(W*d))c.width=Math.round(W*d);if(c.height!==Math.round(Hh*d))c.height=Math.round(Hh*d);x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,Hh);
+const m={l:44,r:8,t:8,b:28},[a0,a1]=o.x,[b0,b1]=o.y,X=v=>m.l+(v-a0)/(a1-a0||1)*(W-m.l-m.r),Y=v=>Hh-m.b-(v-b0)/(b1-b0||1)*(Hh-m.t-m.b),cs=getComputedStyle(document.body);
+x.font='10px system-ui';x.lineWidth=1;
+for(let i=0;i<=4;i++){const u=a0+(a1-a0)*i/4,w=b0+(b1-b0)*i/4;x.strokeStyle=cs.getPropertyValue('--bd');x.beginPath();x.moveTo(X(u),m.t);x.lineTo(X(u),Hh-m.b);x.moveTo(m.l,Y(w));x.lineTo(W-m.r,Y(w));x.stroke();x.fillStyle=cs.getPropertyValue('--mu');x.textAlign='center';x.fillText(u.toFixed(1),X(u),Hh-m.b+12);x.textAlign='right';x.fillText(w.toFixed(1),m.l-4,Y(w)+3)}
+x.textAlign='center';x.fillText(o.xl,(W+m.l)/2,Hh-3);x.save();x.translate(10,(Hh-m.b)/2);x.rotate(-Math.PI/2);x.fillText(o.yl,0,0);x.restore();
+x.lineWidth=2;o.lines.forEach(l=>{x.strokeStyle=l.c;x.beginPath();l.p.forEach((q,i)=>i?x.lineTo(X(q[0]),Y(q[1])):x.moveTo(X(q[0]),Y(q[1])));x.stroke()});
+(o.dots||[]).forEach(q=>{x.fillStyle=q[2];x.beginPath();x.arc(X(q[0]),Y(q[1]),5,0,7);x.fill()})}
+const rng=v=>{let lo=Math.min(0,...v),hi=Math.max(0,...v);if(hi-lo<1){hi+=.5;lo-=.5}const p=(hi-lo)*.08;return[lo-p,hi+p]};
+function upd1(){const s=S[0],{w,th,z,r,r2,al}=s,P=V(r*Math.cos(th),r*Math.sin(th),z),P2=V(r2*Math.cos(th),r2*Math.sin(th),z),C=V(0,0,z),W=V(0,0,w);
+pl.position.z=z;rot.rotation.z=th;p1.position.copy(P);p2.position.copy(P2);ref.visible=!!on.arc;trail.visible=!!on.trail;
+const v=cross(W,P),vCP=cross(W,P.clone().sub(C)),v2=cross(W,P2),at=cross(V(0,0,al),P.clone().sub(C)),ac=cross(W,v),vOC=cross(W,C);
+setA(wA,C,W,.4,4);setA(vA,P,v,.35,4.5);setA(v2A,P2,v2,.35,4.5);setA(opA,V(),P,1,50,'pos');setA(cpA,C,P.clone().sub(C),1,50,'pos');setA(atA,P,at,.15,3,'acc');setA(acA,P,ac,.04,3.5,'acc');
+const span=clamp(th,-6.283,6.283),rho=.45*r+.2;arc.visible=!!on.arc;setPts(arc,Array.from({length:65},(_,i)=>V(rho*Math.cos(span*i/64),rho*Math.sin(span*i/64),.05)));
+putL(L1.P,P.clone().add(V(.5,.3,.5)));putL(L1.P2,P2.clone().add(V(.5,.3,.5)));putL(L1.C,V(-.5,0,z+.45));
+putL(L1.w,V(.4,0,z+Math.sign(w||1)*(Math.min(Math.abs(w)*.4,4)+.5)),Math.abs(w)>.05&&!!on.vec);
+putL(L1.v,P.clone().add(v.clone().setLength(Math.min(v.length()*.35,4.5)+.5)),v.length()>.1&&!!on.vec);putL(L1.r,P.clone().multiplyScalar(.5).add(V(0,0,.5)),!!on.pos);
+const T=Math.abs(w)>.01?2*Math.PI/Math.abs(w):Infinity;
+RO([['ω (angular velocity)',f(w),'rad/s'],['α = dω/dt',f(al),'rad/s²'],['θ (angular displacement)',f(th),'rad'],['Revolutions',f(th/6.2832),'rev'],
+['v = ωr  (P, r₁)',f(Math.abs(w)*r),'m/s'],['|ω × OP|',f(v.length()),'m/s'],['|ω × CP|',f(vCP.length()),'m/s'],['|ω × OC|',f(vOC.length()),'m/s'],['v₂ = ωr₂  (P₂)',f(v2.length()),'m/s'],
+['a_t = αr  (tangential)',f(at.length()),'m/s²'],['a_c = ω²r  (centripetal)',f(ac.length()),'m/s²'],['Period T = 2π/|ω|',T==Infinity?'∞':f(T),'s']]);
+$('#obs').textContent=(Math.abs(w)<.005?'The body is at rest (ω = 0), so every particle has v = 0.':`Every particle shares ω = ${f(w)} rad/s, but v = ωr: P moves at ${f(Math.abs(w)*r)} m/s and P₂ at ${f(Math.abs(w)*r2)} m/s${r2<.05?' (on the axis, so stationary)':''}.`)+(Math.abs(w)>=20?' ω is capped at 20 rad/s in this model.':'')+(Math.abs(al)>.005?' α changes only the magnitude of ω; its direction stays along the z-axis.':'');
+$('#gt').textContent='Graph';const k=+$('#gsel').value;let o;
+if(k==3){const e=Math.abs(w)*4.4,m=Math.max(1,e);o={x:[0,4.5],y:[-m*1.1,m*1.1],xl:'r (m)',yl:'v = ωr (m/s)',lines:[{p:[[0,0],[4.4,w*4.4]],c:'#5b9dff'}],dots:[[r,w*r,'#ffa62b'],[r2,w*r2,'#34d399'],[0,0,'#e5e7eb']]}}
+else{const t0=H.length?H[0][0]:0,t1=H.length?H[H.length-1][0]:0,c=[['ω (rad/s)',2],['θ (rad)',1],['v of P (m/s)',3]][k==1?1:k==2?2:0],vals=H.map(h=>h[c[1]==2?2:c[1]]);
+const idx=k==1?1:k==2?3:2,y=H.map(h=>h[idx]);o={x:[t0,Math.max(t0+10,t1)],y:rng(y),xl:'t (s)',yl:['ω (rad/s)','θ (rad)','v of P (m/s)'][k==1?1:k==2?2:0],lines:[{p:H.map(h=>[h[0],h[idx]]),c:'#5b9dff'}],dots:H.length?[[t1,y[y.length-1],'#ffa62b']]:[]}}
+plot(o)}
+function upd2(){const s=S[1],a=s.az*D,l=s.el*D,th=s.th*D,ps=s.ps*D,sF=on.fF?-1:1,sR=on.fR?-1:1;
+const r0=V(Math.cos(l)*Math.cos(a),Math.cos(l)*Math.sin(a),Math.sin(l)),e1=V(-Math.sin(a),Math.cos(a),0),e2=cross(r0,e1);
+const Fh=r0.clone().multiplyScalar(Math.cos(th)).addScaledVector(e1,Math.sin(th)*Math.cos(ps)).addScaledVector(e2,Math.sin(th)*Math.sin(ps));
+const P=r0.clone().multiplyScalar(sR*s.r),F=Fh.clone().multiplyScalar(sF*s.F),T=cross(P,F),tm=T.length(),pm_=P.length(),Fm=F.length();
+const Fn=Fm>1e-6?F.clone().normalize():V(),Tn=tm>1e-6?T.clone().normalize():V(),Q=P.clone().addScaledVector(Fn,-P.dot(Fn));
+const thA=Fm>1e-6?Math.acos(clamp(P.dot(F)/(pm_*Fm),-1,1)):0,sn=Math.sin(thA);
+pS.position.copy(P);setA(rA,V(),P,1,50);setA(FA,P,F,.5,5);setA(tA,V(),T,.1,5);
+loaL.visible=perp.visible=!!on.loa&&Fm>1e-6;setPts(loaL,[P.clone().addScaledVector(Fn,-8),P.clone().addScaledVector(Fn,8)]);setPts(perp,[V(),Q]);
+pm.visible=!!on.plane&&tm>1e-6;const pa=pg.attributes.position,Pe=P.clone().addScaledVector(Fn,pm_);pa.setXYZ(0,0,0,0);pa.setXYZ(1,P.x,P.y,P.z);pa.setXYZ(2,Pe.x,Pe.y,Pe.z);pa.needsUpdate=true;
+const sh=on.rh&&tm>.05;rhL.visible=rhA.visible=!!sh;
+if(sh){const h=Math.abs(Tn.z)<.9?V(0,0,1):V(1,0,0),u=cross(h,Tn).normalize(),w=cross(Tn,u),cen=Tn.clone().multiplyScalar(Math.min(tm*.1,5)*.6+.2),pt=q=>cen.clone().addScaledVector(u,.9*Math.cos(q)).addScaledVector(w,.9*Math.sin(q)),E=4.6;
+setPts(rhL,Array.from({length:40},(_,i)=>pt(E*i/39)));rhA.position.copy(pt(E));rhA.setDirection(u.clone().multiplyScalar(-Math.sin(E)).addScaledVector(w,Math.cos(E)).normalize());rhA.setLength(.4,.3,.2)}
+putL(L2.r,P.clone().multiplyScalar(.5).add(V(0,0,.5)),!!on.vec);putL(L2.F,P.clone().addScaledVector(Fn,Math.min(Fm*.5,5)+.5),Fm>.1&&!!on.vec);putL(L2.t,Tn.clone().multiplyScalar(Math.min(tm*.1,5)+.5),tm>.3&&!!on.vec);
+putL(L2.P,P.clone().add(V(.4,.3,.5)));putL(L2.p,Q.clone().multiplyScalar(.5).add(V(0,0,.4)),!!on.loa&&Q.length()>.3);
+RO([['|r|',f(pm_),'m'],['|F|',f(Fm),'N'],['θ between r and F',f(thA/D,1),'°'],['r⊥ = r sinθ',f(pm_*sn),'m'],['F⊥ = F sinθ',f(Fm*sn),'N'],['τ = rF sinθ',f(pm_*Fm*sn),'N m'],['|r × F| (vector product)',f(tm),'N m'],
+['τ  (x, y, z)',`(${f(T.x,1)}, ${f(T.y,1)}, ${f(T.z,1)})`,'N m'],['r · τ',f(P.dot(T)),'= 0'],['F · τ',f(F.dot(T)),'= 0']]);
+$('#obs').textContent=(tm<.01?'τ = 0: either r = 0, F = 0, or the line of action of F passes through O (θ = 0° or 180°).':`τ = ${f(tm,1)} N m, perpendicular to the plane of r and F. Only the component F⊥ = ${f(Fm*sn)} N at right angles to r turns the body; the part along r gives no torque.`)+(on.fF!=on.fR?' Reversing one of r or F reverses τ.':on.fF&&on.fR?' Reversing both r and F leaves τ unchanged.':'');
+$('#gt').textContent='Torque magnitude vs θ';const mx=Math.max(1,pm_*Fm*1.1);
+plot({x:[0,180],y:[0,mx],xl:'θ (degrees)',yl:'τ (N m)',lines:[{p:Array.from({length:46},(_,i)=>[i*4,pm_*Fm*Math.sin(i*4*D)]),c:'#5b9dff'}],dots:[[thA/D,pm_*Fm*sn,'#fbbf24']]})}
+/* ---- main loop ---- */
+let last=performance.now();
+(function loop(n){requestAnimationFrame(loop);const dt=Math.min((n-last)/1000,.05);last=n;if(PL[sim])advance(dt*speed);
+sim?upd2():upd1();SL.forEach(s=>s.visible=!!on.lab);ax.visible=!!on.axes;
+if(tw){cam.position.lerp(tw,.12);ctl.target.lerp(tt,.12);if(cam.position.distanceTo(tw)<.03){cam.position.copy(tw);ctl.target.copy(tt);tw=tt=null}}
+ctl.update();R.render(scene,cam)})(last);
+$('#gsel').onchange=()=>{};
+setSim(0);
+}
+</script></body></html>
